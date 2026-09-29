@@ -94,7 +94,7 @@ export function isEcho(text: string, transcript: TranscriptEntry[], now: number,
   const mine = words(text)
   if (mine.size < 2) return false
   return transcript.some((e) => {
-    if (e.speaker !== 'them' || now - e.ts > windowMs) return false
+    if (e.speaker !== 'them' || Math.abs(now - e.ts) > windowMs) return false
     const theirs = words(e.text)
     let common = 0
     mine.forEach((w) => theirs.has(w) && common++)

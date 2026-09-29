@@ -67,7 +67,7 @@ export async function streamLlm(
   const baseUrl = trimSlash(settings.llm.baseUrl || provider.baseUrl)
   const key = getKey(provider.id)
   if (provider.needsKey && !key) {
-    throw new Error(`Falta a chave de API do ${provider.label}. Abra as configurações (⚙) e cole sua chave.`)
+    throw new Error(`Falta a chave de API do ${provider.label.split(' (')[0]}. Abra as configurações (⚙) e cole sua chave.`)
   }
 
   const controller = new AbortController()
@@ -140,7 +140,7 @@ export async function transcribe(settings: Settings, audio: ArrayBuffer, prompt?
   const baseUrl = trimSlash(settings.stt.baseUrl || provider.baseUrl)
   const key = getKey(provider.keyFrom)
   if (provider.id !== 'custom' && !key) {
-    return { text: '', error: `Falta a chave do ${provider.label} para transcrever. Configure em ⚙ → IA.` }
+    return { text: '', error: `Falta a chave do ${provider.label.split(' (')[0]} para transcrever. Configure em ⚙ → IA.` }
   }
 
   const form = new FormData()

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { LLM_PROVIDERS } from '@shared/providers'
+import { LLM_PROVIDERS, STT_PROVIDERS } from '@shared/providers'
 import {
   buildAnswerMessages,
   buildChatMessages,
@@ -179,7 +179,12 @@ export function useCopilot() {
       const now = Date.now()
       if (speaker === 'you' && isEcho(text, transcriptRef.current, now)) return
       const entry: TranscriptEntry = { id: uid(), speaker, text, ts: now }
-      transcriptRef.current = [...transcriptRef.current, entry]
+      let base = transcriptRef.current
+      if (speaker === 'them') {
+        // o eco no microfone pode ter sido transcrito antes da fala original
+        base = base.filter((e) => e.speaker !== 'you' || !isEcho(e.text, [entry], e.ts))
+      }
+      transcriptRef.current = [...base, entry]
       setTranscript(transcriptRef.current)
       if (speaker === 'them') scheduleAutoAnswer()
     },
@@ -321,6 +326,12 @@ export function useCopilot() {
       if (s.demoMode) {
         startDemo()
       } else {
+        const stt = STT_PROVIDERS[s.stt.provider]
+        if (stt.id !== 'custom' && !keysRef.current[stt.keyFrom]) {
+          throw new Error(
+            `Para transcrever a conversa, salve a chave do ${LLM_PROVIDERS[stt.keyFrom].label.split(' (')[0]} em ⚙ → IA. Ou ative o modo demonstração.`
+          )
+        }
         const wanted: Speaker[] = []
         if (s.captureSystem) wanted.push('them')
         if (s.captureMic) wanted.push('you')
