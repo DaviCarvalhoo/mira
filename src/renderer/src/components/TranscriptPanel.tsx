@@ -20,7 +20,7 @@ export function TranscriptPanel({ transcript, listening, onAnswer }: Props) {
   return (
     <section className={`transcript ${open ? 'is-open' : ''}`}>
       <button className="transcript-head" onClick={() => setOpen(!open)}>
-        <span>Transcrição ao vivo</span>
+        <span className="eyebrow">Transcrição</span>
         <span className="transcript-count">{transcript.length}</span>
         <IconChevron size={14} className={`chev ${open ? '' : 'is-up'}`} />
       </button>

@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { modKey } from '../lib/util'
-import { IconMic, IconNotes, IconScreen, IconSend, IconSparkle, IconStop, IconTrash } from './Icons'
+import { IconArrowUp, IconMic, IconNotes, IconScreen, IconSparkle, IconTrash } from './Icons'
 
 interface Props {
   listening: boolean
@@ -34,23 +34,22 @@ export function ControlBar(p: Props) {
           disabled={p.starting}
           title={`${p.listening ? 'Parar' : 'Começar a ouvir'} (${mod}+Shift+L)`}
         >
-          <span className="listen-ring" />
-          {p.listening ? <IconStop size={18} /> : <IconMic size={18} />}
+          {p.listening ? <span className="sig" /> : <IconMic size={15} />}
           <span>{p.starting ? 'Iniciando…' : p.listening ? 'Parar' : p.demo ? 'Iniciar demo' : 'Ouvir'}</span>
         </button>
 
         <button className="tool-btn tool-primary" onClick={p.onAnswer} title={`Responder agora (${mod}+Shift+Enter)`}>
-          <IconSparkle />
+          <IconSparkle size={14} />
           <span>Responder</span>
         </button>
         <button className="tool-btn" onClick={p.onScreen} title={`Analisar tela (${mod}+Shift+H)`}>
-          <IconScreen />
+          <IconScreen size={15} />
         </button>
         <button className="tool-btn" onClick={p.onRecap} title={`Resumo da conversa (${mod}+Shift+R)`}>
-          <IconNotes />
+          <IconNotes size={15} />
         </button>
         <button className="tool-btn" onClick={p.onReset} title="Nova sessão (salva a atual no histórico)">
-          <IconTrash />
+          <IconTrash size={15} />
         </button>
       </div>
 
@@ -62,7 +61,7 @@ export function ControlBar(p: Props) {
           spellCheck={false}
         />
         <button type="submit" className="ask-send" disabled={!text.trim()} title="Enviar">
-          <IconSend size={14} />
+          <IconArrowUp size={14} />
         </button>
       </form>
     </footer>

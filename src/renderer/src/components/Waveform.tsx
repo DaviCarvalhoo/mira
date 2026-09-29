@@ -2,11 +2,11 @@ import { useEffect, useRef, type MutableRefObject } from 'react'
 import type { Levels } from '../hooks/useCopilot'
 
 const BARS = 46
-const COLORS = { them: ['#EC4899', '#8B5CF6'], you: ['#22D3EE', '#8B5CF6'] }
+const COLORS = { them: '#EDEDED', you: '#6B6B6B' }
 
 /**
  * Onda sonora ao vivo (canvas + requestAnimationFrame, sem re-render do React).
- * Metade esquerda = eles (rosa), metade direita = você (ciano).
+ * Metade esquerda = eles (claro), metade direita = você (cinza).
  */
 export function Waveform({ levels, active }: { levels: MutableRefObject<Levels>; active: boolean }) {
   const canvas = useRef<HTMLCanvasElement>(null)
@@ -46,16 +46,13 @@ export function Waveform({ levels, active }: { levels: MutableRefObject<Levels>;
       const t = performance.now() / 1000
       const drawSide = (sp: 'them' | 'you', startIdx: number, reverse: boolean) => {
         const hist = history.current[sp]
-        const grad = ctx.createLinearGradient(0, 0, 0, h)
-        grad.addColorStop(0, COLORS[sp][0])
-        grad.addColorStop(1, COLORS[sp][1])
-        ctx.fillStyle = grad
+        ctx.fillStyle = COLORS[sp]
         for (let i = 0; i < hist.length; i++) {
           const v = hist[reverse ? hist.length - 1 - i : i]
           const idle = active ? 0.06 + 0.04 * Math.sin(t * 2.4 + i * 0.5) : 0.04
           const bh = Math.max(2, (Math.max(v, idle) * 0.92) * h)
           const x = (startIdx + i) * gap + (gap - barW) / 2
-          ctx.globalAlpha = active ? 0.55 + Math.min(0.45, v) : 0.25
+          ctx.globalAlpha = active ? 0.45 + Math.min(0.55, v * 1.5) : 0.2
           ctx.beginPath()
           ctx.roundRect(x, (h - bh) / 2, barW, bh, barW / 2)
           ctx.fill()

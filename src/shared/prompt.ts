@@ -4,7 +4,6 @@ import { formatTranscript } from './question'
 export interface TemplateInfo {
   id: TemplateId
   label: string
-  emoji: string
   description: string
   instructions: string
 }
@@ -13,7 +12,6 @@ export const TEMPLATES: Record<TemplateId, TemplateInfo> = {
   interview: {
     id: 'interview',
     label: 'Entrevista de emprego',
-    emoji: '💼',
     description: 'Respostas em primeira pessoa, usando seu currículo e a vaga.',
     instructions: [
       'Você está ajudando o usuário durante uma entrevista de emprego ao vivo.',
@@ -26,7 +24,6 @@ export const TEMPLATES: Record<TemplateId, TemplateInfo> = {
   technical: {
     id: 'technical',
     label: 'Entrevista técnica',
-    emoji: '🧠',
     description: 'Conceitos, trade-offs, system design e código.',
     instructions: [
       'Você está ajudando o usuário em uma entrevista técnica ao vivo (programação, arquitetura, system design).',
@@ -38,7 +35,6 @@ export const TEMPLATES: Record<TemplateId, TemplateInfo> = {
   sales: {
     id: 'sales',
     label: 'Vendas / cliente',
-    emoji: '🤝',
     description: 'Objeções, perguntas de produto e próximos passos.',
     instructions: [
       'Você está ajudando o usuário em uma call de vendas ou atendimento a cliente.',
@@ -49,7 +45,6 @@ export const TEMPLATES: Record<TemplateId, TemplateInfo> = {
   meeting: {
     id: 'meeting',
     label: 'Reunião',
-    emoji: '🗓️',
     description: 'Respostas rápidas, dados e sugestões durante reuniões.',
     instructions: [
       'Você está ajudando o usuário durante uma reunião de trabalho.',

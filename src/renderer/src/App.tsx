@@ -30,7 +30,6 @@ export default function App() {
 
   return (
     <div className={`shell ${copilot.listening ? 'is-live' : ''} ${clickThrough ? 'is-ghost' : ''}`}>
-      <div className="aurora" />
       <TitleBar
         listening={copilot.listening}
         demo={settings.demoMode}
@@ -51,7 +50,7 @@ export default function App() {
             <Waveform levels={copilot.levels} active={copilot.listening} />
             {!copilot.hasKey && !settings.demoMode && (
               <button className="banner-warn" onClick={() => setView('settings')}>
-                Configure uma chave de API para receber respostas →
+                <span className="sig" /> Falta uma chave de API para responder. <b>Configurar →</b>
               </button>
             )}
             <main className="stage">

@@ -9,9 +9,9 @@ Mostre o **banner** do README e a janela flutuando sobre o desktop.
 
 ## 0:20 · Demo ao vivo (60s)
 1. Abra a Mira: a tela de boas-vindas mostra a identidade visual.
-2. Clique em **Ver demonstração** → **Iniciar demo**.
+2. Clique em **Ver demo** → **Iniciar demo**.
 3. Aponte na tela:
-   - a **onda sonora** separando *Eles* (rosa) e *Você* (ciano);
+   - a **onda sonora** separando *Eles* (claro) e *Você* (cinza), e o pingo do "i" do logo acendendo em laranja enquanto ouve;
    - o "tudo bem?" do começo **não** gera resposta (filtro de cortesia);
    - a pergunta real vira **resposta em streaming**, com a primeira linha pronta pra falar;
    - resposta comportamental em **STAR** (Situação, Ação, Resultado).

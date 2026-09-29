@@ -44,16 +44,16 @@ export function HistoryPanel({ onClose }: { onClose: () => void }) {
           <p className="field-hint">
             {formatDate(open.startedAt)} · {formatDuration(open.endedAt - open.startedAt)}
           </p>
-          {open.cards.length > 0 && <h3 className="section-title">Respostas</h3>}
+          {open.cards.length > 0 && <h3 className="section-title eyebrow">Respostas</h3>}
           {open.cards.map((c) => (
             <div key={c.id} className="card">
-              <p className="card-question">“{c.question}”</p>
-              <div className="card-body">
+              <p className="quote">“{c.question}”</p>
+              <div className="say">
                 <Markdown text={c.answer} />
               </div>
             </div>
           ))}
-          <h3 className="section-title">Transcrição</h3>
+          <h3 className="section-title eyebrow">Transcrição</h3>
           <div className="transcript-list is-static">
             {open.transcript.map((e) => (
               <div key={e.id} className={`line line-${e.speaker}`}>

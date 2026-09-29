@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import logo from '../assets/logo.svg'
 import { formatDuration } from '../lib/util'
 import { IconHistory, IconMinus, IconMouse, IconSettings, IconX } from './Icons'
+import { Wordmark } from './Wordmark'
 
 interface Props {
   listening: boolean
@@ -22,40 +22,35 @@ export function TitleBar({ listening, demo, startedAt, clickThrough, onHistory, 
 
   return (
     <header className="titlebar">
-      <div className="brand">
-        <img src={logo} alt="" className={`brand-logo ${listening ? 'is-live' : ''}`} />
-        <span className="brand-name">Mira</span>
-        {demo && <span className="pill pill-demo">DEMO</span>}
-      </div>
+      <Wordmark live={listening} />
+      {demo && <span className="pill">Demo</span>}
+      {clickThrough && (
+        <span className="pill" title="Cliques atravessam a janela (Ctrl+Shift+M)">
+          <IconMouse size={11} /> Fantasma
+        </span>
+      )}
 
       <div className={`status ${listening ? 'is-live' : ''}`}>
-        <span className="status-dot" />
+        <span className="sig" />
         {listening ? (
-          <>
-            Ouvindo <span className="status-time">{startedAt ? formatDuration(now - startedAt) : ''}</span>
-          </>
+          <span className="status-time">{startedAt ? formatDuration(now - startedAt).padStart(5, '0') : '00:00'}</span>
         ) : (
           'Pausado'
         )}
       </div>
 
-      <div className="titlebar-actions no-drag">
-        {clickThrough && (
-          <span className="pill pill-ghost" title="Cliques atravessam a janela (Ctrl+Shift+M)">
-            <IconMouse size={12} /> fantasma
-          </span>
-        )}
+      <div className="titlebar-actions">
         <button className="icon-btn" onClick={onHistory} title="Histórico">
-          <IconHistory />
+          <IconHistory size={15} />
         </button>
         <button className="icon-btn" onClick={onSettings} title="Configurações">
-          <IconSettings />
+          <IconSettings size={15} />
         </button>
         <button className="icon-btn" onClick={() => window.mira.window.minimize()} title="Minimizar">
-          <IconMinus />
+          <IconMinus size={15} />
         </button>
         <button className="icon-btn icon-btn-danger" onClick={() => window.mira.window.close()} title="Fechar">
-          <IconX />
+          <IconX size={15} />
         </button>
       </div>
     </header>

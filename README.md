@@ -7,11 +7,11 @@
 </p>
 
 <p align="center">
-  <img alt="Electron" src="https://img.shields.io/badge/Electron-44-8B5CF6?logo=electron&logoColor=white" />
-  <img alt="React" src="https://img.shields.io/badge/React-19-EC4899?logo=react&logoColor=white" />
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-22D3EE?logo=typescript&logoColor=white" />
-  <img alt="Tests" src="https://img.shields.io/badge/tests-vitest-8B5CF6" />
-  <img alt="License" src="https://img.shields.io/badge/license-MIT-EC4899" />
+  <img alt="Electron" src="https://img.shields.io/badge/Electron-44-111111?logo=electron&logoColor=white" />
+  <img alt="React" src="https://img.shields.io/badge/React-19-111111?logo=react&logoColor=white" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-111111?logo=typescript&logoColor=white" />
+  <img alt="Tests" src="https://img.shields.io/badge/tests-vitest-111111" />
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-FF5A1F" />
 </p>
 
 ---
@@ -56,7 +56,7 @@ npm install
 npm run dev
 ```
 
-1. Na tela de boas-vindas, clique em **Ver demonstração** para testar na hora, ou em **Configurar agora**.
+1. Na tela de boas-vindas, clique em **Ver demo** para testar na hora, ou em **Configurar agora**.
 2. Em **⚙ → IA**, escolha o provedor e cole a chave. O [Groq](https://console.groq.com/keys) é grátis, muito rápido e cobre transcrição + resposta com uma chave só.
 3. Em **⚙ → Perfil**, cole seu currículo e a descrição da vaga.
 4. Clique em **Ouvir** e entre na call. 🎧 Use fone de ouvido para um áudio mais limpo (a Mira também filtra o eco automaticamente).
@@ -121,7 +121,12 @@ npm run typecheck
 
 ## 🎨 Identidade visual
 
-O logo é um **olho** cuja íris é uma **onda sonora circular**, com uma faísca de IA na pupila: a Mira *vê* e *ouve*. A arte é gerada por código em [`scripts/make-art.mjs`](scripts/make-art.mjs) (`npm run art`).
+Preto, tipografia grotesca ([Geist](https://vercel.com/font)) e **uma única cor de acento**: o laranja de sinal `#FF5A1F`, a luz de "gravando". Ele só aparece no que está ao vivo: o ponto de escuta, o rótulo "diga isso" e o cursor da resposta.
+
+- **Símbolo:** um retículo de precisão (a *mira*) com o ponto de sinal no centro.
+- **Wordmark:** `mira` em minúsculas, com o pingo do **i** sendo o ponto de sinal, que pulsa quando ela está ouvindo.
+
+O ícone é gerado por código em [`scripts/make-art.mjs`](scripts/make-art.mjs) e o banner em [`scripts/art/banner.html`](scripts/art/banner.html) (`npm run art`).
 
 ## 📄 Licença
 

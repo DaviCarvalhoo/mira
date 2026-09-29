@@ -1,0 +1,150 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: 'Geist';
+        src: url('../../node_modules/@fontsource-variable/geist/files/geist-latin-wght-normal.woff2') format('woff2');
+        font-weight: 100 900;
+      }
+      @font-face {
+        font-family: 'Geist Mono';
+        src: url('../../node_modules/@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2') format('woff2');
+        font-weight: 100 900;
+      }
+      * { box-sizing: border-box; margin: 0; }
+      body {
+        width: 1280px;
+        height: 640px;
+        background: #000;
+        color: #ededed;
+        font-family: 'Geist', sans-serif;
+        overflow: hidden;
+        position: relative;
+      }
+      /* grade técnica bem sutil */
+      .grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+        background-size: 64px 64px;
+        mask-image: radial-gradient(70% 90% at 30% 50%, #000 30%, transparent 80%);
+      }
+      .left {
+        position: absolute;
+        left: 96px;
+        top: 0;
+        bottom: 0;
+        width: 640px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .eyebrow {
+        font-family: 'Geist Mono', monospace;
+        font-size: 13px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #8a8a8a;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 28px;
+      }
+      .eyebrow i {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #ff5a1f;
+        box-shadow: 0 0 0 4px rgba(255, 90, 31, 0.18);
+      }
+      .word {
+        font-size: 148px;
+        font-weight: 600;
+        letter-spacing: -0.06em;
+        line-height: 0.9;
+        position: relative;
+        display: inline-block;
+      }
+      .word .i {
+        position: relative;
+        display: inline-block;
+      }
+      .word .i::after {
+        content: '';
+        position: absolute;
+        width: 0.2em;
+        height: 0.2em;
+        border-radius: 50%;
+        background: #ff5a1f;
+        left: 50%;
+        top: 0.02em;
+        transform: translateX(-50%);
+      }
+      h2 {
+        margin-top: 30px;
+        font-size: 31px;
+        font-weight: 500;
+        letter-spacing: -0.03em;
+        line-height: 1.2;
+        color: #f5f5f5;
+      }
+      h2 span { color: #7a7a7a; }
+      .meta {
+        margin-top: 34px;
+        display: flex;
+        gap: 22px;
+        font-family: 'Geist Mono', monospace;
+        font-size: 13px;
+        color: #6f6f6f;
+        letter-spacing: 0.04em;
+      }
+      .shot {
+        position: absolute;
+        right: 88px;
+        top: 50%;
+        transform: translateY(-50%) rotate(0deg);
+        width: 380px;
+        border-radius: 22px;
+        padding: 6px;
+        background: #0c0c0c;
+        border: 1px solid #222;
+        box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.02);
+      }
+      .shot img {
+        display: block;
+        width: 100%;
+        border-radius: 17px;
+      }
+      .glow {
+        position: absolute;
+        right: 170px;
+        top: 150px;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        background: #ff5a1f;
+        filter: blur(140px);
+        opacity: 0.16;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid"></div>
+    <div class="glow"></div>
+    <div class="left">
+      <div class="eyebrow"><i></i>Copiloto de IA · ao vivo</div>
+      <div class="word">m<span class="i">ı</span>ra</div>
+      <h2>Ouve a conversa. Entende a pergunta.<br /><span>Te diz o que responder.</span></h2>
+      <div class="meta">
+        <span>Windows · macOS · Linux</span>
+        <span>8 provedores de IA</span>
+        <span>Open source</span>
+      </div>
+    </div>
+    <div class="shot"><img src="../../docs/screenshots/demo.png" /></div>
+  </body>
+</html>

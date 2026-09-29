@@ -10,7 +10,7 @@ function Svg({ size = 16, children, ...rest }: P) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={1.75}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden
@@ -121,5 +121,15 @@ export const IconDownload = (p: P) => (
 export const IconUpload = (p: P) => (
   <Svg {...p}>
     <path d="M12 21V9M7 14l5-5 5 5M5 3h14" />
+  </Svg>
+)
+export const IconArrowRight = (p: P) => (
+  <Svg {...p}>
+    <path d="M5 12h14M12 5l7 7-7 7" />
+  </Svg>
+)
+export const IconArrowUp = (p: P) => (
+  <Svg {...p}>
+    <path d="M12 19V5M5 12l7-7 7 7" />
   </Svg>
 )

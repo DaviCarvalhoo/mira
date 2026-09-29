@@ -154,7 +154,7 @@ export function SettingsPanel({ copilot, onClose }: { copilot: Copilot; onClose:
       <div className="panel-body">
         {tab === 'ai' && (
           <>
-            <h3 className="section-title">Modelo de linguagem</h3>
+            <h3 className="section-title eyebrow">Modelo de linguagem</h3>
             <Field label="Provedor">
               <select
                 value={s.llm.provider}
@@ -188,7 +188,7 @@ export function SettingsPanel({ copilot, onClose }: { copilot: Copilot; onClose:
               <input value={s.llm.baseUrl} onChange={(e) => set('llm', { ...s.llm, baseUrl: e.target.value })} spellCheck={false} />
             </Field>
 
-            <h3 className="section-title">Transcrição (voz → texto)</h3>
+            <h3 className="section-title eyebrow">Transcrição (voz → texto)</h3>
             <Field label="Provedor">
               <select
                 value={s.stt.provider}
@@ -283,15 +283,18 @@ export function SettingsPanel({ copilot, onClose }: { copilot: Copilot; onClose:
 
         {tab === 'behavior' && (
           <>
-            <h3 className="section-title">Modo</h3>
+            <h3 className="section-title eyebrow">Modo</h3>
             <div className="templates">
-              {Object.values(TEMPLATES).map((t) => (
+              {Object.values(TEMPLATES).map((t, i) => (
                 <button
                   key={t.id}
                   className={`template ${s.template === t.id ? 'is-active' : ''}`}
                   onClick={() => set('template', t.id as TemplateId)}
                 >
-                  <span className="template-emoji">{t.emoji}</span>
+                  <span className="template-top">
+                    <span className="eyebrow">0{i + 1}</span>
+                    {s.template === t.id && <span className="sig" />}
+                  </span>
                   <span className="template-label">{t.label}</span>
                   <span className="template-desc">{t.description}</span>
                 </button>
@@ -316,7 +319,7 @@ export function SettingsPanel({ copilot, onClose }: { copilot: Copilot; onClose:
               </Field>
             </div>
 
-            <h3 className="section-title">Escuta</h3>
+            <h3 className="section-title eyebrow">Escuta</h3>
             <Toggle
               checked={s.autoAnswer}
               onChange={(v) => set('autoAnswer', v)}
@@ -342,7 +345,7 @@ export function SettingsPanel({ copilot, onClose }: { copilot: Copilot; onClose:
               hint="Simula uma entrevista. Sem chave de API usa respostas prontas."
             />
 
-            <h3 className="section-title">Aparência</h3>
+            <h3 className="section-title eyebrow">Aparência</h3>
             <Field label={`Opacidade da janela — ${Math.round(s.opacity * 100)}%`}>
               <input
                 type="range"
