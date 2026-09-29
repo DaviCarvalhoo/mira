@@ -15,7 +15,7 @@ export const DEMO_SCRIPT: DemoStep[] = [
   { speaker: 'them', text: 'Oi, tudo bem? Obrigado por participar do nosso processo seletivo.', delay: 900 },
   { speaker: 'you', text: 'Tudo ótimo! Eu que agradeço pelo convite.', delay: 2200 },
   { speaker: 'them', text: 'Pra começar, me fala um pouco sobre você e a sua trajetória?', delay: 1800 },
-  { speaker: 'you', text: 'Claro! Eu sou desenvolvedor full stack e nos últimos anos venho focando em produtos web.', delay: 9000 },
+  { speaker: 'you', text: 'Claro! Eu trabalho com desenvolvimento full stack e nos últimos anos venho focando em produtos web.', delay: 9000 },
   { speaker: 'them', text: 'Legal. E qual foi o maior desafio técnico que você já resolveu?', delay: 4200 },
   { speaker: 'you', text: 'Um que eu gosto de contar foi quando o nosso app estava muito lento...', delay: 9500 },
   { speaker: 'them', text: 'Interessante. Como você lida quando discorda de alguém do time sobre uma decisão técnica?', delay: 4500 },
