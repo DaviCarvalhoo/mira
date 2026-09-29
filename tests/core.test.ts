@@ -45,7 +45,15 @@ describe('isQuestion', () => {
     'walk me through your resume'
   ])('detecta: %s', (q) => expect(isQuestion(q)).toBe(true))
 
-  it.each(['Legal, entendi.', 'Contexto é importante no projeto', 'ok', 'A gente usa React aqui'])(
+  it.each([
+    'Legal, entendi.',
+    'Contexto é importante no projeto',
+    'ok',
+    'A gente usa React aqui',
+    'Oi, tudo bem? Obrigado por participar do nosso processo seletivo.',
+    'Consegue me ouvir?',
+    'Bom dia, como vai você?'
+  ])(
     'ignora: %s',
     (q) => expect(isQuestion(q)).toBe(false)
   )

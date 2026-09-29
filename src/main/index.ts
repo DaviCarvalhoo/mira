@@ -209,6 +209,29 @@ function registerIpc(): void {
   })
 }
 
+/**
+ * Modo de captura para gerar screenshots da documentação:
+ * MIRA_SNAPSHOT=arquivo.png [MIRA_SNAPSHOT_JS="código"] [MIRA_SNAPSHOT_DELAY=ms]
+ */
+function setupSnapshot(): void {
+  const out = process.env.MIRA_SNAPSHOT
+  if (!out || !win) return
+  const delay = Number(process.env.MIRA_SNAPSHOT_DELAY ?? 2500)
+  win.webContents.once('did-finish-load', async () => {
+    await new Promise((r) => setTimeout(r, 800))
+    if (process.env.MIRA_SNAPSHOT_JS) {
+      await win?.webContents.executeJavaScript(process.env.MIRA_SNAPSHOT_JS).catch((e) => console.error(e))
+    }
+    await new Promise((r) => setTimeout(r, delay))
+    const img = await win!.webContents.capturePage()
+    const { writeFileSync } = await import('node:fs')
+    writeFileSync(out, img.toPNG())
+    app.quit()
+  })
+}
+
+if (process.env.MIRA_USER_DATA) app.setPath('userData', process.env.MIRA_USER_DATA)
+
 // Uma instância só
 if (!app.requestSingleInstanceLock()) {
   app.quit()
@@ -223,6 +246,7 @@ if (!app.requestSingleInstanceLock()) {
     setupMediaCapture()
     registerIpc()
     createWindow()
+    setupSnapshot()
     registerShortcuts()
   })
 

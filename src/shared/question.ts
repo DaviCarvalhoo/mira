@@ -22,14 +22,21 @@ function normalize(text: string): string {
     .trim()
 }
 
+/** Perguntas de cortesia / checagem de áudio que não precisam de resposta da IA. */
+const SMALL_TALK =
+  /^(oi|olá|ola|e aí|e ai|bom dia|boa tarde|boa noite|hi|hello|hey|opa)?[\s,]*(tudo (bem|bom|certo|joia|tranquilo)|como (vai|você está|voce esta|vc ta|está|esta)|beleza|td bem|me (ouve|escuta)|(está|esta|tá|ta) me ouvindo|consegue me (ouvir|escutar)|how are you|how's it going|can you hear me|podemos come[çc]ar|vamos l[aá]|pronto|ok)[\s,]*(\p{L}+)?\??$/u
+
 /** Heurística rápida: o texto parece uma pergunta ou pedido? */
 export function isQuestion(text: string): boolean {
   const t = normalize(text)
   if (t.length < 6) return false
-  if (t.includes('?')) return true
-  // qualquer frase do trecho começando com um marcador de pergunta
-  const sentences = t.split(/[.!;]\s*/).map((s) => s.trim()).filter(Boolean)
-  return sentences.some((s) => QUESTION_STARTERS.some((q) => startsWithWord(s, q)))
+  // quebra em frases mantendo a pontuação final
+  const sentences = (t.match(/[^.!?;]+[.!?;]*/g) ?? []).map((s) => s.trim()).filter(Boolean)
+  return sentences.some((s) => {
+    if (SMALL_TALK.test(s)) return false
+    if (s.endsWith('?')) return true
+    return QUESTION_STARTERS.some((q) => startsWithWord(s, q))
+  })
 }
 
 function startsWithWord(s: string, prefix: string): boolean {
