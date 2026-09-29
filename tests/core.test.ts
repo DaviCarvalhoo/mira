@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { SseParser, extractDelta } from '@shared/sse'
-import { cleanTranscript, formatTranscript, isQuestion, latestTheirTurn } from '@shared/question'
+import { cleanTranscript, formatTranscript, isEcho, isQuestion, latestTheirTurn } from '@shared/question'
 import { SpeechSegmenter, encodeWav, resample } from '@shared/audio'
 import { buildAnswerMessages, buildSystemPrompt } from '@shared/prompt'
 import { DEFAULT_SETTINGS, mergeSettings } from '@shared/providers'
@@ -126,5 +126,14 @@ describe('prompt', () => {
     expect(s.llm.provider).toBe('openai')
     expect(s.llm.model).toBe(DEFAULT_SETTINGS.llm.model)
     expect(s.autoAnswer).toBe(true)
+  })
+})
+
+describe('isEcho', () => {
+  it('descarta no microfone o eco do que eles acabaram de falar', () => {
+    const tr = [t('them', 'Qual foi o maior desafio técnico que você resolveu?', 1000)]
+    expect(isEcho('qual foi o maior desafio técnico', tr, 3000)).toBe(true)
+    expect(isEcho('Eu reescrevi o checkout inteiro em React', tr, 3000)).toBe(false)
+    expect(isEcho('qual foi o maior desafio técnico', tr, 60000)).toBe(false)
   })
 })

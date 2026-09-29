@@ -75,6 +75,26 @@ export function latestTheirTurn(transcript: TranscriptEntry[], maxGapMs = 20000)
   return parts.join(' ').trim()
 }
 
+function words(text: string): Set<string> {
+  return new Set(normalize(text).replace(/[^\p{L}\p{N}\s]/gu, '').split(' ').filter((w) => w.length > 2))
+}
+
+/**
+ * Sem fone de ouvido o microfone capta a voz da call. Detecta se uma fala do
+ * "você" é só o eco de algo que "eles" acabaram de dizer.
+ */
+export function isEcho(text: string, transcript: TranscriptEntry[], now: number, windowMs = 8000): boolean {
+  const mine = words(text)
+  if (mine.size < 2) return false
+  return transcript.some((e) => {
+    if (e.speaker !== 'them' || now - e.ts > windowMs) return false
+    const theirs = words(e.text)
+    let common = 0
+    mine.forEach((w) => theirs.has(w) && common++)
+    return common / mine.size >= 0.6
+  })
+}
+
 /** Formata as últimas falas para o contexto do modelo, limitando tamanho. */
 export function formatTranscript(transcript: TranscriptEntry[], maxChars = 4000, names = { them: 'Eles', you: 'Eu' }): string {
   const lines: string[] = []
