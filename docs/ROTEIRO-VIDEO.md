@@ -1,4 +1,4 @@
-# 🎬 Roteiro do vídeo de apresentação (~3 min)
+# Roteiro do vídeo de apresentação (~3 min)
 
 Sugestão de roteiro para apresentar a Mira numa entrevista de emprego.
 

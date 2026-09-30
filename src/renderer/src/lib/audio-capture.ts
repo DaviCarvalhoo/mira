@@ -120,7 +120,7 @@ async function getSystemAudio(): Promise<MediaStream> {
     stream.removeTrack(t)
   })
   if (!stream.getAudioTracks().length) {
-    throw new Error('O sistema não liberou o áudio do computador (loopback). No macOS isso exige um dispositivo virtual como o BlackHole.')
+    throw new Error('O sistema não liberou o áudio do computador (loopback). Neste sistema, use só o microfone (⚙ → Comportamento).')
   }
   return stream
 }

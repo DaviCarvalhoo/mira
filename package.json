@@ -21,6 +21,7 @@
   "build": {
     "appId": "dev.mira.copilot",
     "productName": "Mira",
+    "copyright": "Copyright © 2026 Davi Carvalho",
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -29,17 +30,53 @@
       "out/**/*",
       "resources/**/*"
     ],
+    "asar": true,
+    "compression": "maximum",
     "win": {
-      "target": "nsis",
-      "icon": "build/icon.png"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "legalTrademarks": "Mira"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Mira",
+      "uninstallDisplayName": "Mira",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "license": "LICENSE",
+      "artifactName": "Mira-Setup-${version}.exe"
+    },
+    "portable": {
+      "artifactName": "Mira-Portable-${version}.exe"
     },
     "mac": {
       "target": "dmg",
-      "icon": "build/icon.png"
+      "icon": "build/icon.png",
+      "category": "public.app-category.productivity",
+      "artifactName": "Mira-${version}.dmg"
     },
     "linux": {
       "target": "AppImage",
-      "icon": "build/icon.png"
+      "icon": "build/icon.png",
+      "category": "Office",
+      "artifactName": "Mira-${version}.AppImage"
     }
   },
   "devDependencies": {
@@ -59,5 +96,6 @@
     "@fontsource-variable/geist-mono": "^5.3.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
-  }
+  },
+  "homepage": "https://github.com/DaviCarvalhoo/mira"
 }
