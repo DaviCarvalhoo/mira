@@ -35,6 +35,7 @@ export function useCopilot() {
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
   const [cards, setCards] = useState<AnswerCard[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [info, setInfo] = useState<string | null>(null)
   const [startedAt, setStartedAt] = useState<number | null>(null)
   const [thinking, setThinking] = useState(false)
 
@@ -90,6 +91,18 @@ export function useCopilot() {
     setError(msg)
     window.setTimeout(() => setError((cur) => (cur === msg ? null : cur)), 7000)
   }, [])
+
+  // o modelo configurado saiu do ar: o processo principal trocou e salvou outro
+  useEffect(
+    () =>
+      window.mira.llm.onModelSwitched(({ from, to, settings: next }) => {
+        setSettingsState(next)
+        const msg = `O modelo ${from} não está disponível na sua conta. Troquei para ${to}.`
+        setInfo(msg)
+        window.setTimeout(() => setInfo((cur) => (cur === msg ? null : cur)), 8000)
+      }),
+    []
+  )
 
   // ---------- cards ----------
   const updateCards = useCallback((fn: (c: AnswerCard[]) => AnswerCard[]) => {
@@ -426,7 +439,11 @@ export function useCopilot() {
     cards,
     levels,
     error,
-    dismissError: () => setError(null),
+    info,
+    dismissError: () => {
+      setError(null)
+      setInfo(null)
+    },
     start,
     stop,
     toggle,

@@ -17,8 +17,8 @@ export const LLM_PROVIDERS: Record<LlmProviderId, LlmProviderInfo> = {
     label: 'Groq (rápido, tem plano grátis)',
     kind: 'openai',
     baseUrl: 'https://api.groq.com/openai/v1',
-    defaultModel: 'llama-3.3-70b-versatile',
-    models: ['llama-3.3-70b-versatile', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'llama-3.1-8b-instant'],
+    defaultModel: 'openai/gpt-oss-120b',
+    models: ['openai/gpt-oss-120b', 'llama-3.3-70b-versatile', 'openai/gpt-oss-20b', 'llama-3.1-8b-instant'],
     needsKey: true,
     keyUrl: 'https://console.groq.com/keys'
   },
@@ -158,4 +158,28 @@ export function mergeSettings(saved: Partial<Settings> | null | undefined): Sett
     stt: { ...DEFAULT_SETTINGS.stt, ...(s.stt ?? {}) },
     profile: { ...DEFAULT_SETTINGS.profile, ...(s.profile ?? {}) }
   }
+}
+
+/** O erro da API indica que o modelo não existe ou não está liberado na conta? */
+export function isModelNotFound(status: number, message: string): boolean {
+  if (status === 404) return true
+  return (status === 400 || status === 403) && /model.*(not.?found|does not exist|decommissioned|not available|no access|blocked)|model_not_found|model_decommissioned/i.test(message)
+}
+
+/** Modelos que raciocinam antes de responder (precisam de mais tokens). */
+export function isReasoningModel(model: string): boolean {
+  return /gpt-oss|(^|\/)o[134](-|$)|deepseek-r1|qwen3|reason/i.test(model)
+}
+
+/** Escolhe um modelo substituto entre os disponíveis, seguindo a ordem de preferência do provedor. */
+export function pickFallbackModel(available: string[], preferred: string[], current: string): string | null {
+  const pool = available.filter((m) => m !== current)
+  for (const m of preferred) if (pool.includes(m)) return m
+  // senão, o primeiro que pareça um modelo de chat
+  return pool.find(isChatModel) ?? null
+}
+
+/** Filtra modelos que não servem para conversa (voz, embeddings, moderação...). */
+export function isChatModel(model: string): boolean {
+  return !/whisper|tts|transcribe|embed|guard|safeguard|orpheus|playai|moderation|audio|image|dall-e|realtime/i.test(model)
 }

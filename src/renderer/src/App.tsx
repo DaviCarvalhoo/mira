@@ -71,9 +71,10 @@ export default function App() {
           </>
         ))}
 
-      {copilot.error && (
-        <div className="toast" role="alert">
-          <span>{copilot.error}</span>
+      {(copilot.error || copilot.info) && (
+        <div className={`toast ${copilot.error ? '' : 'toast-info'}`} role="alert">
+          <span className="sig" />
+          <span>{copilot.error ?? copilot.info}</span>
           <button className="icon-btn icon-btn-sm" onClick={copilot.dismissError}>
             <IconX size={14} />
           </button>

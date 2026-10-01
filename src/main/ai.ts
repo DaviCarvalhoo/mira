@@ -1,4 +1,4 @@
-import { LLM_PROVIDERS, STT_PROVIDERS } from '@shared/providers'
+import { LLM_PROVIDERS, STT_PROVIDERS, isModelNotFound, isReasoningModel, pickFallbackModel } from '@shared/providers'
 import { SseParser, extractDelta } from '@shared/sse'
 import type { ChatContent, ChatMessage, LlmRequest, Settings, TranscribeResult } from '@shared/types'
 import { getKey } from './store'
@@ -58,11 +58,67 @@ function friendlyError(err: unknown, baseUrl: string): string {
   return msg
 }
 
+class HttpError extends Error {
+  constructor(
+    readonly status: number,
+    message: string
+  ) {
+    super(message)
+  }
+}
+
+function authHeaders(kind: 'openai' | 'anthropic', key: string): Record<string, string> {
+  if (kind === 'anthropic') return { 'x-api-key': key, 'anthropic-version': '2023-06-01' }
+  return key ? { authorization: `Bearer ${key}` } : {}
+}
+
+/** Lista os modelos que a conta realmente tem disponíveis (GET /models). */
+export async function listModels(settings: Settings): Promise<string[]> {
+  const provider = LLM_PROVIDERS[settings.llm.provider] ?? LLM_PROVIDERS.custom
+  const baseUrl = trimSlash(settings.llm.baseUrl || provider.baseUrl)
+  const key = getKey(provider.id)
+  if (provider.needsKey && !key) throw new Error(`Falta a chave de API do ${provider.label.split(' (')[0]}.`)
+  try {
+    const res = await fetch(`${baseUrl}/models`, { headers: authHeaders(provider.kind, key) })
+    if (!res.ok) throw new Error(await readError(res))
+    const json = (await res.json()) as { data?: { id: string; active?: boolean }[] }
+    return (json.data ?? []).filter((m) => m.active !== false).map((m) => m.id)
+  } catch (err) {
+    throw new Error(friendlyError(err, baseUrl))
+  }
+}
+
+/**
+ * Gera em streaming. Se o modelo configurado não existir mais na conta,
+ * troca automaticamente pelo melhor disponível e tenta de novo (uma vez).
+ */
 export async function streamLlm(
   settings: Settings,
   req: LlmRequest,
-  onDelta: (delta: string) => void
+  onDelta: (delta: string) => void,
+  onModelSwitch?: (from: string, to: string) => void
 ): Promise<void> {
+  try {
+    await streamOnce(settings, req, onDelta)
+  } catch (err) {
+    if (!(err instanceof HttpError) || !isModelNotFound(err.status, err.message)) throw err
+    const provider = LLM_PROVIDERS[settings.llm.provider] ?? LLM_PROVIDERS.custom
+    let available: string[] = []
+    try {
+      available = await listModels(settings)
+    } catch {
+      throw err
+    }
+    const next = pickFallbackModel(available, provider.models, settings.llm.model)
+    if (!next) {
+      throw new Error(`O modelo "${settings.llm.model}" não está disponível na sua conta. Escolha outro em ⚙ → IA.`)
+    }
+    onModelSwitch?.(settings.llm.model, next)
+    await streamOnce({ ...settings, llm: { ...settings.llm, model: next } }, req, onDelta)
+  }
+}
+
+async function streamOnce(settings: Settings, req: LlmRequest, onDelta: (delta: string) => void): Promise<void> {
   const provider = LLM_PROVIDERS[settings.llm.provider] ?? LLM_PROVIDERS.custom
   const baseUrl = trimSlash(settings.llm.baseUrl || provider.baseUrl)
   const key = getKey(provider.id)
@@ -72,7 +128,9 @@ export async function streamLlm(
 
   const controller = new AbortController()
   running.set(req.id, controller)
-  const maxTokens = req.maxTokens ?? 900
+  const reasoning = isReasoningModel(settings.llm.model)
+  // modelos de raciocínio gastam tokens pensando antes de responder
+  const maxTokens = reasoning ? Math.max(req.maxTokens ?? 900, 2000) : (req.maxTokens ?? 900)
   const temperature = req.temperature ?? 0.4
 
   let url: string
@@ -106,13 +164,15 @@ export async function streamLlm(
       stream: true,
       temperature,
       max_tokens: maxTokens,
-      messages: req.messages.map((m) => ({ role: m.role, content: toOpenAiContent(m.content) }))
+      messages: req.messages.map((m) => ({ role: m.role, content: toOpenAiContent(m.content) })),
+      // no Groq, raciocínio curto mantém a resposta rápida
+      ...(reasoning && provider.id === 'groq' ? { reasoning_effort: 'low' } : {})
     }
   }
 
   try {
     const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal })
-    if (!res.ok || !res.body) throw new Error(await readError(res))
+    if (!res.ok || !res.body) throw new HttpError(res.status, await readError(res))
 
     const parser = new SseParser()
     const decoder = new TextDecoder()
@@ -129,6 +189,7 @@ export async function streamLlm(
     }
   } catch (err) {
     if (controller.signal.aborted) return
+    if (err instanceof HttpError) throw new HttpError(err.status, friendlyError(err, baseUrl))
     throw new Error(friendlyError(err, baseUrl))
   } finally {
     running.delete(req.id)

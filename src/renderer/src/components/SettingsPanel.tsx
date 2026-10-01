@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { LLM_PROVIDERS, STT_PROVIDERS } from '@shared/providers'
+import { LLM_PROVIDERS, STT_PROVIDERS, isChatModel } from '@shared/providers'
 import { TEMPLATES } from '@shared/prompt'
 import type { AnswerLength, LlmProviderId, Settings, SttProviderId, TemplateId } from '@shared/types'
 import type { Copilot } from '../hooks/useCopilot'
@@ -21,6 +21,12 @@ const LANGS = [
   { v: 'es', l: 'Espanhol' },
   { v: 'auto', l: 'Detectar automaticamente' }
 ]
+
+/** Recomendados primeiro, depois o resto em ordem alfabética. */
+function sortModels(models: string[], preferred: string[]): string[] {
+  const top = preferred.filter((m) => models.includes(m))
+  return [...top, ...models.filter((m) => !top.includes(m)).sort()]
+}
 
 function Field({ label, hint, children }: { label: string; hint?: ReactNode; children: ReactNode }) {
   return (
@@ -109,6 +115,35 @@ export function SettingsPanel({ copilot, onClose }: { copilot: Copilot; onClose:
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => setS((cur) => ({ ...cur, [k]: v }))
   const setProfile = (k: keyof Settings['profile'], v: string) => setS((cur) => ({ ...cur, profile: { ...cur.profile, [k]: v } }))
 
+  // se o processo principal trocou o modelo (o antigo saiu do ar), acompanha
+  const externalModel = copilot.settings!.llm.model
+  useEffect(() => {
+    setS((cur) => (cur.llm.model === externalModel ? cur : { ...cur, llm: { ...cur.llm, model: externalModel } }))
+  }, [externalModel])
+
+  // modelos reais da conta (GET /models)
+  const [remote, setRemote] = useState<{ status: 'idle' | 'loading' | 'ok' | 'error'; models: string[]; msg?: string }>({
+    status: 'idle',
+    models: []
+  })
+  const testConnection = async () => {
+    setRemote({ status: 'loading', models: [] })
+    await copilot.saveSettings(s) // o processo principal lê as configurações salvas
+    const res = await window.mira.llm.models()
+    if (res.error) setRemote({ status: 'error', models: [], msg: res.error })
+    else setRemote({ status: 'ok', models: res.models.filter(isChatModel) })
+  }
+  const providerInfo = LLM_PROVIDERS[s.llm.provider]
+  const canQuery = !providerInfo.needsKey || !!copilot.keys[s.llm.provider]
+  useEffect(() => {
+    if (tab !== 'ai' || !canQuery) {
+      setRemote({ status: 'idle', models: [] })
+      return
+    }
+    const t = window.setTimeout(() => void testConnection(), 500)
+    return () => window.clearTimeout(t)
+  }, [tab, s.llm.provider, s.llm.baseUrl, canQuery])
+
   const llm = LLM_PROVIDERS[s.llm.provider]
   const stt = STT_PROVIDERS[s.stt.provider]
   const sttKeyMissing = s.stt.provider !== 'custom' && !copilot.keys[stt.keyFrom]
@@ -170,18 +205,47 @@ export function SettingsPanel({ copilot, onClose }: { copilot: Copilot; onClose:
                 ))}
               </select>
             </Field>
-            <Field label="Modelo">
-              <input
-                list="llm-models"
-                value={s.llm.model}
-                onChange={(e) => set('llm', { ...s.llm, model: e.target.value })}
-                spellCheck={false}
-              />
-              <datalist id="llm-models">
-                {llm.models.map((m) => (
-                  <option key={m} value={m} />
-                ))}
-              </datalist>
+            <Field
+              label="Modelo"
+              hint={
+                remote.status === 'ok' ? (
+                  <>Conectado. {remote.models.length} modelos disponíveis na sua conta.</>
+                ) : remote.status === 'error' ? (
+                  <span className="hint-error">{remote.msg}</span>
+                ) : remote.status === 'loading' ? (
+                  'Verificando conexão…'
+                ) : undefined
+              }
+            >
+              <div className="key-row">
+                {remote.status === 'ok' && remote.models.length > 0 ? (
+                  <select value={s.llm.model} onChange={(e) => set('llm', { ...s.llm, model: e.target.value })}>
+                    {!remote.models.includes(s.llm.model) && <option value={s.llm.model}>{s.llm.model} (indisponível)</option>}
+                    {sortModels(remote.models, llm.models).map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <>
+                    <input
+                      list="llm-models"
+                      value={s.llm.model}
+                      onChange={(e) => set('llm', { ...s.llm, model: e.target.value })}
+                      spellCheck={false}
+                    />
+                    <datalist id="llm-models">
+                      {llm.models.map((m) => (
+                        <option key={m} value={m} />
+                      ))}
+                    </datalist>
+                  </>
+                )}
+                <button type="button" className="btn btn-sm" onClick={() => void testConnection()} disabled={remote.status === 'loading'}>
+                  Testar
+                </button>
+              </div>
             </Field>
             <KeyInput provider={s.llm.provider} copilot={copilot} />
             <Field label="Endpoint (avançado)">

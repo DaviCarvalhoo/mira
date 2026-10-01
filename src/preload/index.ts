@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type { HotkeyAction, MiraApi } from '@shared/api'
-import type { LlmChunkEvent, LlmEndEvent } from '@shared/types'
+import type { LlmChunkEvent, LlmEndEvent, Settings } from '@shared/types'
 
 function on<T>(channel: string, cb: (payload: T) => void): () => void {
   const listener = (_e: IpcRendererEvent, payload: T) => cb(payload)
@@ -22,7 +22,9 @@ const api: MiraApi = {
     stream: (req) => ipcRenderer.invoke('llm:stream', req),
     abort: (id) => ipcRenderer.invoke('llm:abort', id),
     onChunk: (cb) => on<LlmChunkEvent>('llm:chunk', cb),
-    onEnd: (cb) => on<LlmEndEvent>('llm:end', cb)
+    onEnd: (cb) => on<LlmEndEvent>('llm:end', cb),
+    models: () => ipcRenderer.invoke('llm:models'),
+    onModelSwitched: (cb) => on<{ from: string; to: string; settings: Settings }>('llm:model-switched', cb)
   },
   stt: {
     transcribe: (audio, prompt) => ipcRenderer.invoke('stt:transcribe', audio, prompt)

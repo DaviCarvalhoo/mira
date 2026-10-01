@@ -12,7 +12,7 @@ import {
 import { join } from 'node:path'
 import type { HotkeyAction } from '@shared/api'
 import type { LlmProviderId, LlmRequest, Session, Settings } from '@shared/types'
-import { abortLlm, streamLlm, transcribe } from './ai'
+import { abortLlm, listModels, streamLlm, transcribe } from './ai'
 import {
   getSession,
   getSettings,
@@ -179,9 +179,19 @@ function registerIpc(): void {
   ipcMain.handle('llm:stream', async (e, req: LlmRequest) => {
     const sender = e.sender
     try {
-      await streamLlm(getSettings(), req, (delta) => {
-        if (!sender.isDestroyed()) sender.send('llm:chunk', { id: req.id, delta })
-      })
+      await streamLlm(
+        getSettings(),
+        req,
+        (delta) => {
+          if (!sender.isDestroyed()) sender.send('llm:chunk', { id: req.id, delta })
+        },
+        (from, to) => {
+          // o modelo saiu do ar ou não está liberado: salva o substituto
+          const cur = getSettings()
+          const saved = saveSettings({ ...cur, llm: { ...cur.llm, model: to } })
+          if (!sender.isDestroyed()) sender.send('llm:model-switched', { from, to, settings: saved })
+        }
+      )
       if (!sender.isDestroyed()) sender.send('llm:end', { id: req.id })
     } catch (err) {
       if (!sender.isDestroyed()) {
@@ -190,6 +200,13 @@ function registerIpc(): void {
     }
   })
   ipcMain.handle('llm:abort', (_e, id: string) => abortLlm(id))
+  ipcMain.handle('llm:models', async () => {
+    try {
+      return { models: await listModels(getSettings()) }
+    } catch (err) {
+      return { models: [], error: err instanceof Error ? err.message : String(err) }
+    }
+  })
 
   ipcMain.handle('stt:transcribe', (_e, audio: ArrayBuffer, prompt?: string) => transcribe(getSettings(), audio, prompt))
 

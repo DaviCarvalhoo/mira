@@ -802,6 +802,9 @@ kbd {
   color: var(--text-3);
   line-height: 1.5;
 }
+.hint-error {
+  color: var(--danger);
+}
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1095,6 +1098,9 @@ kbd {
 .toast .sig {
   background: var(--danger);
   margin-top: 6px;
+}
+.toast-info .sig {
+  background: var(--signal);
 }
 .toast span:not(.sig) {
   flex: 1;

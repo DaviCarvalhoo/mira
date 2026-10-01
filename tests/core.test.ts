@@ -3,7 +3,7 @@ import { SseParser, extractDelta } from '@shared/sse'
 import { cleanTranscript, formatTranscript, isEcho, isQuestion, latestTheirTurn } from '@shared/question'
 import { SpeechSegmenter, encodeWav, resample } from '@shared/audio'
 import { buildAnswerMessages, buildSystemPrompt } from '@shared/prompt'
-import { DEFAULT_SETTINGS, mergeSettings } from '@shared/providers'
+import { DEFAULT_SETTINGS, isModelNotFound, isReasoningModel, mergeSettings, pickFallbackModel } from '@shared/providers'
 import type { TranscriptEntry } from '@shared/types'
 
 describe('SseParser', () => {
@@ -143,5 +143,28 @@ describe('isEcho', () => {
     expect(isEcho('qual foi o maior desafio técnico', tr, 3000)).toBe(true)
     expect(isEcho('Eu reescrevi o checkout inteiro em React', tr, 3000)).toBe(false)
     expect(isEcho('qual foi o maior desafio técnico', tr, 60000)).toBe(false)
+  })
+})
+
+describe('fallback de modelo', () => {
+  it('reconhece erro de modelo inexistente', () => {
+    expect(isModelNotFound(404, '404: The model `llama-3.3-70b-versatile` does not exist')).toBe(true)
+    expect(isModelNotFound(400, 'model_decommissioned')).toBe(true)
+    expect(isModelNotFound(401, 'Invalid API Key')).toBe(false)
+    expect(isModelNotFound(500, 'internal error')).toBe(false)
+  })
+  it('escolhe o substituto pela ordem de preferência', () => {
+    const avail = ['whisper-large-v3', 'llama-3.1-8b-instant', 'openai/gpt-oss-120b']
+    expect(pickFallbackModel(avail, ['openai/gpt-oss-120b', 'llama-3.3-70b-versatile'], 'llama-3.3-70b-versatile')).toBe('openai/gpt-oss-120b')
+  })
+  it('sem preferido disponível, pega um modelo de chat (nunca whisper)', () => {
+    expect(pickFallbackModel(['whisper-large-v3', 'qwen/qwen3-32b'], ['x'], 'y')).toBe('qwen/qwen3-32b')
+    expect(pickFallbackModel(['whisper-large-v3'], ['x'], 'y')).toBeNull()
+  })
+  it('identifica modelos de raciocínio', () => {
+    expect(isReasoningModel('openai/gpt-oss-120b')).toBe(true)
+    expect(isReasoningModel('o4-mini')).toBe(true)
+    expect(isReasoningModel('llama-3.3-70b-versatile')).toBe(false)
+    expect(isReasoningModel('gpt-4o-mini')).toBe(false)
   })
 })

@@ -26,6 +26,9 @@ export interface MiraApi {
     abort(id: string): Promise<void>
     onChunk(cb: (e: LlmChunkEvent) => void): () => void
     onEnd(cb: (e: LlmEndEvent) => void): () => void
+    /** modelos disponíveis na conta do provedor atual */
+    models(): Promise<{ models: string[]; error?: string }>
+    onModelSwitched(cb: (e: { from: string; to: string; settings: Settings }) => void): () => void
   }
   stt: {
     transcribe(audio: ArrayBuffer, prompt?: string): Promise<TranscribeResult>
