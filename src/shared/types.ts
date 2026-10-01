@@ -22,6 +22,8 @@ export interface Profile {
   resume: string
   jobDescription: string
   notes: string
+  /** nomes e termos que a transcrição deve reconhecer */
+  vocabulary: string
 }
 
 export interface Settings {

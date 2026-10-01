@@ -18,6 +18,7 @@ import type {
   Speaker,
   TranscriptEntry
 } from '@shared/types'
+import { buildSttPrompt, buildVocabulary, fixMishearings } from '@shared/vocab'
 import { AudioSource } from '../lib/audio-capture'
 import { DEMO_SCRIPT, demoAnswer } from '../lib/demo'
 import { abortChat, completeChat, streamChat } from '../lib/llm'
@@ -187,7 +188,7 @@ export function useCopilot() {
 
   const addEntry = useCallback(
     (speaker: Speaker, raw: string) => {
-      const text = cleanTranscript(raw)
+      const text = fixMishearings(cleanTranscript(raw))
       if (!text) return
       const now = Date.now()
       if (speaker === 'you' && isEcho(text, transcriptRef.current, now)) return
@@ -246,8 +247,9 @@ export function useCopilot() {
     (wav: ArrayBuffer, speaker: Speaker) => {
       sttQueue.current[speaker] = sttQueue.current[speaker].then(async () => {
         try {
-          const context = transcriptRef.current.slice(-4).map((e) => e.text).join(' ')
-          const res = await window.mira.stt.transcribe(wav, context)
+          const recent = transcriptRef.current.slice(-3).map((e) => e.text).join(' ')
+          const vocab = settingsRef.current ? buildVocabulary(settingsRef.current.profile) : []
+          const res = await window.mira.stt.transcribe(wav, buildSttPrompt(vocab, recent))
           if (res.error) showError(`Transcrição: ${res.error}`)
           else addEntry(speaker, res.text)
         } catch (err) {

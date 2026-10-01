@@ -136,7 +136,7 @@ export const DEFAULT_SETTINGS: Settings = {
     baseUrl: STT_PROVIDERS.groq.baseUrl,
     language: 'pt'
   },
-  profile: { name: '', role: '', resume: '', jobDescription: '', notes: '' },
+  profile: { name: '', role: '', resume: '', jobDescription: '', notes: '', vocabulary: '' },
   template: 'interview',
   answerLength: 'short',
   answerLanguage: 'auto',

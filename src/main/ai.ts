@@ -210,7 +210,7 @@ export async function transcribe(settings: Settings, audio: ArrayBuffer, prompt?
   form.append('response_format', 'json')
   form.append('temperature', '0')
   if (settings.stt.language && settings.stt.language !== 'auto') form.append('language', settings.stt.language)
-  if (prompt) form.append('prompt', prompt.slice(-400))
+  if (prompt) form.append('prompt', prompt.slice(-1000))
 
   try {
     const res = await fetch(`${baseUrl}/audio/transcriptions`, {

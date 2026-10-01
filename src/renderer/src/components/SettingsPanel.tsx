@@ -341,6 +341,17 @@ export function SettingsPanel({ copilot, onClose }: { copilot: Copilot; onClose:
                 placeholder="Pretensão salarial, perguntas que quero fazer, detalhes do produto…"
               />
             </Field>
+            <Field
+              label="Vocabulário"
+              hint="Nomes, empresas e termos que a transcrição deve escrever certo, separados por vírgula. Termos do currículo e da vaga já entram automaticamente."
+            >
+              <textarea
+                rows={2}
+                value={s.profile.vocabulary}
+                onChange={(e) => setProfile('vocabulary', e.target.value)}
+                placeholder="Ex.: Claude Code, Itaú, Kafka, Supabase, nome do recrutador"
+              />
+            </Field>
             {inlineMsg && <div className="notice">{inlineMsg}</div>}
           </>
         )}

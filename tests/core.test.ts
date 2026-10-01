@@ -5,6 +5,7 @@ import { SpeechSegmenter, encodeWav, resample } from '@shared/audio'
 import { buildAnswerMessages, buildSystemPrompt } from '@shared/prompt'
 import { DEFAULT_SETTINGS, isModelNotFound, isReasoningModel, mergeSettings, pickFallbackModel } from '@shared/providers'
 import type { TranscriptEntry } from '@shared/types'
+import { buildSttPrompt, buildVocabulary, extractTerms, fixMishearings } from '@shared/vocab'
 
 describe('SseParser', () => {
   it('junta eventos quebrados em pedaços arbitrários', () => {
@@ -166,5 +167,38 @@ describe('fallback de modelo', () => {
     expect(isReasoningModel('o4-mini')).toBe(true)
     expect(isReasoningModel('llama-3.3-70b-versatile')).toBe(false)
     expect(isReasoningModel('gpt-4o-mini')).toBe(false)
+  })
+})
+
+describe('vocabulário da transcrição', () => {
+  it('corrige as frases reais da sessão', () => {
+    expect(fixMishearings('Quero usar o Cloud Code para automatizar meus processos, como eu usaria?')).toBe(
+      'Quero usar o Claude Code para automatizar meus processos, como eu usaria?'
+    )
+    expect(fixMishearings('Não, eu falo do Cloud Code da Antropic.')).toBe('Não, eu falo do Claude Code da Anthropic.')
+    expect(fixMishearings('o cloud da Anthropic é bom')).toBe('o Claude da Anthropic é bom')
+    expect(fixMishearings('cloud sonnet ou cloud opus')).toBe('Claude sonnet ou Claude opus')
+  })
+  it('não mexe em "cloud" no sentido de nuvem', () => {
+    expect(fixMishearings('subi tudo na cloud da AWS')).toBe('subi tudo na cloud da AWS')
+    expect(fixMishearings('cloud computing')).toBe('cloud computing')
+  })
+  it('extrai termos técnicos e nomes próprios do currículo', () => {
+    const terms = extractTerms('Trabalhei no Itaú com React, Node.js e AWS. Usei Kafka e C# no PicPay.')
+    expect(terms).toEqual(expect.arrayContaining(['Itaú', 'React', 'Node.js', 'AWS', 'Kafka', 'C#', 'PicPay']))
+    expect(terms).not.toContain('Trabalhei')
+    expect(terms).not.toContain('Usei')
+  })
+  it('monta o vocabulário com prioridade para os termos do usuário, sem repetir', () => {
+    const v = buildVocabulary({ ...DEFAULT_SETTINGS.profile, vocabulary: 'Supabase, claude', resume: 'Usei React' })
+    expect(v[0]).toBe('Supabase')
+    expect(v.filter((x) => x.toLowerCase() === 'claude')).toHaveLength(1)
+    expect(v).toContain('Claude Code')
+  })
+  it('o prompt do Whisper termina com o vocabulário e corrige o contexto', () => {
+    const p = buildSttPrompt(['Claude Code', 'Anthropic'], 'falo do Cloud Code da Antropic')
+    expect(p.endsWith('Termos: Claude Code, Anthropic.')).toBe(true)
+    expect(p).toContain('Claude Code da Anthropic')
+    expect(p.length).toBeLessThanOrEqual(700)
   })
 })

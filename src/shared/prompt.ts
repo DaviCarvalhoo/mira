@@ -1,5 +1,6 @@
 import type { AnswerLength, ChatMessage, Settings, TemplateId, TranscriptEntry } from './types'
 import { formatTranscript } from './question'
+import { buildVocabulary } from './vocab'
 
 export interface TemplateInfo {
   id: TemplateId
@@ -85,6 +86,9 @@ export function buildSystemPrompt(settings: Settings): string {
     `- ${LENGTH_RULES[settings.answerLength]}`,
     `- ${languageRule(settings.answerLanguage)}`,
     '- A transcrição vem de reconhecimento de voz e pode ter erros; interprete a intenção.',
+    '- Nomes próprios e termos técnicos podem vir com grafia fonética errada (ex.: "Cloud Code da Antropic" = "Claude Code da Anthropic"). Use o contexto e o vocabulário abaixo para entender o que foi dito.',
+    '- Se não conhecer bem um produto ou termo citado, diga o que sabe com honestidade em vez de inventar detalhes.',
+    `\nVocabulário provável da conversa: ${buildVocabulary(settings.profile).slice(0, 60).join(', ')}.`,
     ctx.length ? `\n# Contexto do usuário\n${ctx.join('\n\n')}` : ''
   ]
     .join('\n')
