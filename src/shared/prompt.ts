@@ -1,6 +1,6 @@
 import type { AnswerLength, ChatMessage, Settings, TemplateId, TranscriptEntry } from './types'
 import { formatTranscript } from './question'
-import { buildVocabulary } from './vocab'
+import { buildVocabulary, knownTermsFor } from './vocab'
 
 export interface TemplateInfo {
   id: TemplateId
@@ -65,7 +65,9 @@ function languageRule(lang: string): string {
   return `Responda sempre em ${lang}.`
 }
 
-export function buildSystemPrompt(settings: Settings): string {
+/** `about`: texto da conversa/pergunta, usado para anexar definições de termos citados. */
+export function buildSystemPrompt(settings: Settings, about = ''): string {
+  const facts = knownTermsFor(about)
   const t = TEMPLATES[settings.template] ?? TEMPLATES.interview
   const p = settings.profile
   const ctx: string[] = []
@@ -89,7 +91,10 @@ export function buildSystemPrompt(settings: Settings): string {
     '- Nomes próprios e termos técnicos podem vir com grafia fonética errada (ex.: "Cloud Code da Antropic" = "Claude Code da Anthropic"). Use o contexto e o vocabulário abaixo para entender o que foi dito.',
     '- Se não conhecer bem um produto ou termo citado, diga o que sabe com honestidade em vez de inventar detalhes.',
     `\nVocabulário provável da conversa: ${buildVocabulary(settings.profile).slice(0, 60).join(', ')}.`,
-    ctx.length ? `\n# Contexto do usuário\n${ctx.join('\n\n')}` : ''
+    ctx.length ? `\n# Contexto do usuário\n${ctx.join('\n\n')}` : '',
+    facts.length
+      ? `\n# Referência confiável sobre termos citados (use estes fatos, não invente outros)\n${facts.map((f) => `- ${f}`).join('\n')}`
+      : ''
   ]
     .join('\n')
     .trim()
@@ -98,7 +103,7 @@ export function buildSystemPrompt(settings: Settings): string {
 export function buildAnswerMessages(settings: Settings, transcript: TranscriptEntry[], question: string): ChatMessage[] {
   const convo = formatTranscript(transcript, 5000, { them: 'Entrevistador/Outros', you: 'Eu (usuário)' })
   return [
-    { role: 'system', content: buildSystemPrompt(settings) },
+    { role: 'system', content: buildSystemPrompt(settings, `${convo}\n${question}`) },
     {
       role: 'user',
       content: [
@@ -115,7 +120,7 @@ export function buildAnswerMessages(settings: Settings, transcript: TranscriptEn
 export function buildChatMessages(settings: Settings, transcript: TranscriptEntry[], prompt: string): ChatMessage[] {
   const convo = formatTranscript(transcript, 5000, { them: 'Outros', you: 'Eu' })
   return [
-    { role: 'system', content: buildSystemPrompt(settings) },
+    { role: 'system', content: buildSystemPrompt(settings, `${convo}\n${prompt}`) },
     {
       role: 'user',
       content: [convo ? `Transcrição recente:\n"""\n${convo}\n"""` : '', prompt].filter(Boolean).join('\n\n')
@@ -126,7 +131,7 @@ export function buildChatMessages(settings: Settings, transcript: TranscriptEntr
 export function buildScreenMessages(settings: Settings, transcript: TranscriptEntry[], dataUrl: string): ChatMessage[] {
   const convo = formatTranscript(transcript, 2500, { them: 'Outros', you: 'Eu' })
   return [
-    { role: 'system', content: buildSystemPrompt(settings) },
+    { role: 'system', content: buildSystemPrompt(settings, convo) },
     {
       role: 'user',
       content: [

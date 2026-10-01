@@ -18,7 +18,7 @@ import type {
   Speaker,
   TranscriptEntry
 } from '@shared/types'
-import { buildSttPrompt, buildVocabulary, fixMishearings } from '@shared/vocab'
+import { buildSttPrompt, buildVocabulary, fixMishearings, isPromptEcho, removeStutter } from '@shared/vocab'
 import { AudioSource } from '../lib/audio-capture'
 import { DEMO_SCRIPT, demoAnswer } from '../lib/demo'
 import { abortChat, completeChat, streamChat } from '../lib/llm'
@@ -188,8 +188,11 @@ export function useCopilot() {
 
   const addEntry = useCallback(
     (speaker: Speaker, raw: string) => {
-      const text = fixMishearings(cleanTranscript(raw))
-      if (!text) return
+      const text = removeStutter(fixMishearings(cleanTranscript(raw)))
+      if (!text || !cleanTranscript(text)) return
+      // o Whisper às vezes repete o próprio prompt (a lista de vocabulário) em vez de transcrever
+      const s = settingsRef.current
+      if (s && isPromptEcho(text, buildVocabulary(s.profile))) return
       const now = Date.now()
       if (speaker === 'you' && isEcho(text, transcriptRef.current, now)) return
       const entry: TranscriptEntry = { id: uid(), speaker, text, ts: now }

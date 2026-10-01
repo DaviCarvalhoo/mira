@@ -5,7 +5,7 @@ import { SpeechSegmenter, encodeWav, resample } from '@shared/audio'
 import { buildAnswerMessages, buildSystemPrompt } from '@shared/prompt'
 import { DEFAULT_SETTINGS, isModelNotFound, isReasoningModel, mergeSettings, pickFallbackModel } from '@shared/providers'
 import type { TranscriptEntry } from '@shared/types'
-import { buildSttPrompt, buildVocabulary, extractTerms, fixMishearings } from '@shared/vocab'
+import { buildSttPrompt, buildVocabulary, extractTerms, fixMishearings, isPromptEcho, removeStutter } from '@shared/vocab'
 
 describe('SseParser', () => {
   it('junta eventos quebrados em pedaços arbitrários', () => {
@@ -195,10 +195,66 @@ describe('vocabulário da transcrição', () => {
     expect(v.filter((x) => x.toLowerCase() === 'claude')).toHaveLength(1)
     expect(v).toContain('Claude Code')
   })
-  it('o prompt do Whisper termina com o vocabulário e corrige o contexto', () => {
-    const p = buildSttPrompt(['Claude Code', 'Anthropic'], 'falo do Cloud Code da Antropic')
-    expect(p.endsWith('Termos: Claude Code, Anthropic.')).toBe(true)
+})
+
+describe('lixo do Whisper (transcrições reais)', () => {
+  const vocab = buildVocabulary(DEFAULT_SETTINGS.profile)
+  const pipeline = (raw: string) => {
+    const t = removeStutter(fixMishearings(cleanTranscript(raw)))
+    if (!t || !cleanTranscript(t) || isPromptEcho(t, vocab)) return ''
+    return t
+  }
+
+  it('corrige "Code" com sotaque', () => {
+    expect(fixMishearings('Claude Couto')).toBe('Claude Code')
+    expect(fixMishearings('Claude Could.')).toBe('Claude Code.')
+    expect(fixMishearings('Claude, Could.')).toBe('Claude Code.')
+  })
+
+  it('remove gagueira de letras soltas', () => {
+    expect(removeStutter('C. C. C. C.')).toBe('')
+    expect(removeStutter('C. C. C. Para usar o C. Cloud no meu sistema, qual a melhor forma de implementar?')).toBe(
+      'Para usar o Cloud no meu sistema, qual a melhor forma de implementar?'
+    )
+    expect(removeStutter('Uso a API da AWS. Ok.')).toBe('Uso a API da AWS. Ok.')
+  })
+
+  it('descarta eco do prompt e ruído, mantendo falas reais', () => {
+    expect(pipeline('Termin, Claude, Couto.')).toBe('')
+    expect(pipeline('Claude Couto.')).toBe('')
+    expect(pipeline('Claude, Could.')).toBe('')
+    expect(pipeline('C. C. C. C.')).toBe('')
+    expect(pipeline('Na conversa aparecem nomes como Claude, Anthropic e React.')).toBe('')
+    expect(pipeline('Bom, uso do Cloud.')).toBe('Bom, uso do Cloud.')
+    expect(pipeline('Quero usar o Claude Code para automatizar meus processos')).toBe(
+      'Quero usar o Claude Code para automatizar meus processos'
+    )
+  })
+
+  it('o prompt do Whisper é uma frase natural, sem "Termos:"', () => {
+    const p = buildSttPrompt(['Claude Code', 'Anthropic', 'React'], 'falo do Cloud Code da Antropic')
+    expect(p).toContain('Na conversa aparecem nomes como Claude Code, Anthropic e React.')
     expect(p).toContain('Claude Code da Anthropic')
-    expect(p.length).toBeLessThanOrEqual(700)
+    expect(p).not.toMatch(/termos:/i)
+  })
+})
+
+describe('saídas reais do Whisper do Groq (voz pt-BR sintetizada)', () => {
+  it.each([
+    [' Quero usar o CloudCode para automatizar meus processos. Como eu usaria?', 'Quero usar o Claude Code para automatizar meus processos. Como eu usaria?'],
+    [' Não, eu falo do Clodicudantropic.', 'Não, eu falo do Claude Code da Anthropic.'],
+    [' Não, eu falo do Claude Coddantropic.', 'Não, eu falo do Claude Code da Anthropic.'],
+    [' Claude Code.', 'Claude Code.']
+  ])('%s', (raw, expected) => {
+    expect(removeStutter(fixMishearings(cleanTranscript(raw)))).toBe(expected)
+  })
+})
+
+describe('referência de termos recentes', () => {
+  it('anexa a definição do Claude Code só quando ele é citado', () => {
+    const msgs = buildAnswerMessages(DEFAULT_SETTINGS, [], 'Como uso o Claude Code para automatizar processos?')
+    expect(String(msgs[0].content)).toContain('agente de programação da Anthropic')
+    const other = buildAnswerMessages(DEFAULT_SETTINGS, [], 'Fale sobre você')
+    expect(String(other[0].content)).not.toContain('agente de programação da Anthropic')
   })
 })

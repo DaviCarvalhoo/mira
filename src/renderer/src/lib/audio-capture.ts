@@ -63,7 +63,9 @@ export class AudioSource {
     this.segmenter = new SpeechSegmenter({
       sampleRate: this.rate,
       silenceMs: this.speaker === 'them' ? 800 : 700,
-      minThreshold: this.speaker === 'them' ? 0.008 : 0.014
+      minThreshold: this.speaker === 'them' ? 0.008 : 0.014,
+      // no microfone, ruídos curtos (respiração, clique) viram alucinação no Whisper
+      minSpeechMs: this.speaker === 'them' ? 350 : 550
     })
     this.node.port.onmessage = (e: MessageEvent<Float32Array>) => this.onFrame(e.data)
     src.connect(this.node)

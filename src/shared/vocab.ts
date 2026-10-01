@@ -35,8 +35,44 @@ export const DEFAULT_VOCAB = [
   'full stack'
 ]
 
+/**
+ * Referência rápida de ferramentas recentes que modelos com corte de
+ * conhecimento antigo não conhecem (e acabam inventando). Só entra no prompt
+ * quando o termo aparece na conversa.
+ */
+const KNOWN_TERMS: { match: RegExp; text: string }[] = [
+  {
+    match: /claude code/i,
+    text:
+      'Claude Code: agente de programação da Anthropic que roda no terminal (comando `claude`), também disponível em extensões de IDE (VS Code, JetBrains) e na web. ' +
+      'Instalação: `npm install -g @anthropic-ai/claude-code` (nome exato do pacote); login com conta Claude ou chave da API da Anthropic. ' +
+      'Ele lê o código do projeto, edita arquivos, executa comandos e testes e faz commits a partir de pedidos em linguagem natural. ' +
+      'Personalização: arquivo CLAUDE.md com instruções do projeto, comandos de barra (slash commands), hooks, subagentes e servidores MCP para conectar ferramentas externas. ' +
+      'Automação: modo não interativo `claude -p "tarefa"` para scripts e CI/CD (ex.: GitHub Actions), e o Claude Agent SDK para criar agentes próprios.'
+  },
+  {
+    match: /\bmcp\b|model context protocol/i,
+    text: 'MCP (Model Context Protocol): padrão aberto criado pela Anthropic para conectar modelos de IA a ferramentas e dados externos (APIs, bancos, arquivos) por meio de servidores MCP.'
+  },
+  {
+    match: /\bclaude\b(?! code)/i,
+    text: 'Claude: família de modelos de IA da Anthropic (Opus, Sonnet e Haiku), acessível pelo app claude.ai e pela API da Anthropic (SDKs oficiais em Python e TypeScript).'
+  }
+]
+
+/** Definições dos termos citados no texto, para orientar o modelo. */
+export function knownTermsFor(text: string): string[] {
+  return KNOWN_TERMS.filter((k) => k.match.test(text)).map((k) => k.text)
+}
+
 /** Erros de audição comuns e a grafia correta. */
 const MISHEARINGS: [RegExp, string][] = [
+  // tudo grudado: "Claude Coddantropic", "Clodicudantropic"
+  [/\bclaude\s+cod+e?\s?d?a?n?th?r[oó]pic\p{L}*/giu, 'Claude Code da Anthropic'],
+  [/\bcl\p{L}*?d\p{L}*?c\p{L}*?d+e?\s?d?a?n?th?r[oó]pic\p{L}*/giu, 'Claude Code da Anthropic'],
+  [/\b(?:da|do)n?th?r[oó]pic\p{L}*/giu, 'da Anthropic'],
+  // "Code" com sotaque brasileiro vira "Couto", "Could", "Cold"...
+  [/\b(?:claude|cloud|cl[aá]udio),?\s+(?:code|couto|could|cold|coud|codi|cod|c[oó]di?)\b/gi, 'Claude Code'],
   [/\bcloud[\s-]?code\b/gi, 'Claude Code'],
   [/\bcl[aá]udio[\s-]?code\b/gi, 'Claude Code'],
   [/\bcloud(?=\s+(?:da|do|de|from|by)\s+an?t?h?ropic)/gi, 'Claude'],
@@ -56,6 +92,41 @@ const MISHEARINGS: [RegExp, string][] = [
 
 export function fixMishearings(text: string): string {
   return MISHEARINGS.reduce((t, [re, rep]) => t.replace(re, rep), text)
+}
+
+/**
+ * Remove a "gagueira" do Whisper: letras soltas repetidas ("C. C. C.")
+ * e a letra solta antes da palavra que ela antecipa ("o C. Cloud").
+ */
+export function removeStutter(text: string): string {
+  return text
+    .replace(/(?:\b\p{L}\.\s*){2,}/gu, ' ')
+    .replace(/\b(\p{L})\.\s+(?=\1\p{L})/giu, '')
+    .replace(/^\s*\p{L}\.\s*$/u, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,.?!])/g, '$1')
+    .trim()
+}
+
+const LEAK_WORDS = /^(term|vocab|nomes?$|conversa|aparecem|como$|e$|de$|da$|do$)/
+
+/**
+ * Detecta quando o Whisper "papagaiou" o próprio prompt em vez de transcrever:
+ * um trecho curto feito só de termos do vocabulário.
+ */
+export function isPromptEcho(text: string, vocab: string[]): boolean {
+  // eco literal da frase do prompt
+  if (/aparecem nomes como|^\s*termos?\s*:/i.test(text)) return true
+  const vocabWords = new Set(
+    vocab.flatMap((t) => t.toLowerCase().split(/[^\p{L}\p{N}]+/u)).filter((w) => w.length > 1)
+  )
+  const words = text
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean)
+  if (!words.length || words.length > 6) return false
+  const leaked = words.filter((w) => vocabWords.has(w) || LEAK_WORDS.test(w)).length
+  return leaked / words.length >= 0.8
 }
 
 /** Divide o campo de vocabulário do usuário (vírgula, ponto e vírgula ou quebra de linha). */
@@ -112,10 +183,12 @@ export function buildVocabulary(profile: Profile): string[] {
  * Prompt da transcrição. O Whisper só considera o FINAL do prompt (~224 tokens),
  * então o vocabulário vai por último e o contexto da conversa (já corrigido) antes.
  */
-export function buildSttPrompt(vocab: string[], recentText: string, maxChars = 700): string {
-  let terms = `Termos: ${vocab.join(', ')}.`
-  if (terms.length > maxChars - 80) terms = `Termos: ${vocab.join(', ').slice(0, maxChars - 90)}.`
-  const room = maxChars - terms.length - 1
-  const context = room > 40 ? fixMishearings(recentText).slice(-room) : ''
-  return context ? `${context} ${terms}` : terms
+export function buildSttPrompt(vocab: string[], recentText: string, maxTerms = 18): string {
+  // frase natural: em formato de lista ("Termos: a, b, c") o Whisper tende a repetir o prompt
+  const terms = vocab.slice(0, maxTerms)
+  const sentence = terms.length
+    ? `Na conversa aparecem nomes como ${terms.slice(0, -1).join(', ')}${terms.length > 1 ? ' e ' : ''}${terms[terms.length - 1]}.`
+    : ''
+  const context = removeStutter(fixMishearings(recentText)).slice(-200)
+  return [context, sentence].filter(Boolean).join(' ')
 }

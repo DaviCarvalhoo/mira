@@ -79,8 +79,8 @@ function inline(text: string): ReactNode[] {
     if (m.index > last) out.push(<Fragment key={k++}>{text.slice(last, m.index)}</Fragment>)
     const tok = m[0]
     if (tok.startsWith('`')) out.push(<code key={k++}>{tok.slice(1, -1)}</code>)
-    else if (tok.startsWith('**') || tok.startsWith('__')) out.push(<strong key={k++}>{tok.slice(2, -2)}</strong>)
-    else out.push(<em key={k++}>{tok.slice(1, -1)}</em>)
+    else if (tok.startsWith('**') || tok.startsWith('__')) out.push(<strong key={k++}>{inline(tok.slice(2, -2))}</strong>)
+    else out.push(<em key={k++}>{inline(tok.slice(1, -1))}</em>)
     last = m.index + tok.length
   }
   // negrito ainda aberto durante o streaming
@@ -88,7 +88,7 @@ function inline(text: string): ReactNode[] {
   const open = rest.indexOf('**')
   if (open !== -1) {
     if (open > 0) out.push(<Fragment key={k++}>{rest.slice(0, open)}</Fragment>)
-    out.push(<strong key={k++}>{rest.slice(open + 2)}</strong>)
+    out.push(<strong key={k++}>{inline(rest.slice(open + 2))}</strong>)
   } else if (rest) {
     out.push(<Fragment key={k++}>{rest}</Fragment>)
   }
